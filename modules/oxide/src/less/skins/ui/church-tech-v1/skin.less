@@ -1,0 +1,85 @@
+@import 'src/less/theme/theme';
+
+//
+// GLOBALS
+//
+@background-color: #fff;
+@toolbar-background-color: @background-color;
+@menubar-background-color: @background-color;
+@border-color: rgba(230, 232, 231, 1);
+@color-black: rgba(78, 88, 86, 1);
+@color-white: #fff;
+@color-tint: #d9f2ef;
+@color-error: #c00;
+@color-success: #78ab46;
+@base-value: 16px;
+@control-border-radius: 3px;
+@panel-border-radius: 3px;
+@tinymce-border-color: transparent;
+@tinymce-border-radius: 0;
+@tinymce-border-width: 0;
+@font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+@font-weight-normal: normal;
+@font-weight-bold: bold;
+//
+// EDIT AREA
+//
+@edit-area-border-color: transparent;
+@edit-area-border-width: 0;
+//
+// Editor
+//
+.tox:not(.tox-tinymce-inline) .tox-editor-header {
+  padding: 0;
+}
+//
+// TOOLBAR BUTTONS
+//
+@toolbar-button-background-color: @background-color;
+@toolbar-button-border-radius: 3px;
+@toolbar-button-border: 0;
+@toolbar-button-box-shadow: none;
+@toolbar-button-chevron-color: fade(@toolbar-button-icon-color, 50%);
+@toolbar-button-chevron-width: @base-value;
+@toolbar-button-font-size: @font-size-sm;
+@toolbar-button-font-style: normal;
+@toolbar-button-font-weight: @font-weight-normal;
+@toolbar-button-height: 28px;
+@toolbar-button-icon-color: contrast(@background-color, @color-white, @color-black);
+@toolbar-button-spacing-x: 1px;
+@toolbar-button-spacing-y: 5px;
+@toolbar-button-text-color: contrast(@background-color, @color-white, @color-black);
+@toolbar-button-text-transform: none;
+@toolbar-button-width: 34px;
+
+@toolbar-button-hover-background-color: rgba(217, 242, 239, 0.5);
+@toolbar-button-hover-icon-color: rgba(52, 63, 61, 1);
+@toolbar-button-hover-text-color: rgba(52, 63, 61, 1);
+
+@toolbar-button-active-background-color: @toolbar-button-hover-background-color;
+@toolbar-button-active-icon-color: rgba(13, 134, 121, 1);
+@toolbar-button-active-text-color: rgba(13, 134, 121, 1);
+
+@toolbar-button-enabled-background-color: @toolbar-button-hover-background-color;
+@toolbar-button-enabled-icon-color: rgba(13, 134, 121, 1);
+@toolbar-button-enabled-text-color: rgba(13, 134, 121, 1);
+
+@toolbar-button-disabled-background-color: @toolbar-button-background-color;
+@toolbar-button-disabled-icon-color: fade(@toolbar-button-icon-color, 50%);
+@toolbar-button-disabled-text-color: fade(@toolbar-button-text-color, 50%);
+//
+// Toolbar
+//
+@toolbar-background-color: @background-color;
+@toolbar-padding-y: 1px;
+@toolbar-padding-x: @pad-sm;
+@toolbar-row-separator-color: @tinymce-separator-color;
+@toolbar-row-separator-padding: @toolbar-group-padding-x;
+@toolbar-separator-distance: 0px;
+@toolbar-separator-color: rgba(@color-black, 0.1);
+//
+// TOOLBAR GROUP
+//
+@toolbar-group-padding-x: 11px;
+@toolbar-group-spacing-y: 0;
+@toolbar-group-separator-color: rgba(@color-black, 0.1);
