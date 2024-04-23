@@ -1,15 +1,41 @@
 @import 'src/less/theme/theme';
 
 //
+// Custom Variables
+//
+// pure
+@pure-white: #fff;
+@pure-black: #000;
+// primary
+@primary-50: #f4fbfa;
+@primary-100: #d9f2ef;
+@primary-200: #a0ddd7;
+@primary-300: #70cdc2;
+@primary-400: #41bcae;
+@primary-500: #11ab9a;
+@primary-600: #0d8679;
+@primary-700: #0a675c;
+@primary-800: #07443e;
+@primary-900: #03221f;
+// gray
+@gray-50: #f2f3f3;
+@gray-100: #e6e8e7;
+@gray-200: #d9dbdb;
+@gray-300: #b3b8b7;
+@gray-400: #9a9f9e;
+@gray-500: #808785;
+@gray-600: #676f6e;
+@gray-700: #4e5856;
+@gray-800: #343f3d;
+@gray-900: #1b2826;
+//
 // GLOBALS
 //
-@background-color: #fff;
-@toolbar-background-color: @background-color;
-@menubar-background-color: @background-color;
-@border-color: rgba(230, 232, 231, 1);
-@color-black: rgba(78, 88, 86, 1);
-@color-white: #fff;
-@color-tint: #d9f2ef;
+@background-color: @pure-white;
+@border-color: @gray-100;
+@color-black: @gray-700;
+@color-white: @pure-white;
+@color-tint: @primary-100;
 @color-error: #c00;
 @color-success: #78ab46;
 @base-value: 16px;
@@ -33,53 +59,31 @@
   padding: 0;
 }
 //
+// MENUBAR
+//
+@menubar-background-color: @background-color;
+//
 // TOOLBAR BUTTONS
 //
-@toolbar-button-background-color: @background-color;
-@toolbar-button-border-radius: 3px;
-@toolbar-button-border: 0;
-@toolbar-button-box-shadow: none;
-@toolbar-button-chevron-color: fade(@toolbar-button-icon-color, 50%);
-@toolbar-button-chevron-width: @base-value;
-@toolbar-button-font-size: @font-size-sm;
-@toolbar-button-font-style: normal;
-@toolbar-button-font-weight: @font-weight-normal;
-@toolbar-button-height: 28px;
-@toolbar-button-icon-color: contrast(@background-color, @color-white, @color-black);
-@toolbar-button-spacing-x: 1px;
-@toolbar-button-spacing-y: 5px;
-@toolbar-button-text-color: contrast(@background-color, @color-white, @color-black);
-@toolbar-button-text-transform: none;
-@toolbar-button-width: 34px;
-
-@toolbar-button-hover-background-color: rgba(217, 242, 239, 0.5);
-@toolbar-button-hover-icon-color: rgba(52, 63, 61, 1);
-@toolbar-button-hover-text-color: rgba(52, 63, 61, 1);
+@toolbar-button-hover-background-color: @primary-100;
+@toolbar-button-hover-icon-color: @primary-700;
+@toolbar-button-hover-text-color: @primary-700;
 
 @toolbar-button-active-background-color: @toolbar-button-hover-background-color;
-@toolbar-button-active-icon-color: rgba(13, 134, 121, 1);
-@toolbar-button-active-text-color: rgba(13, 134, 121, 1);
+@toolbar-button-active-icon-color: @primary-700;
+@toolbar-button-active-text-color: @primary-700;
 
 @toolbar-button-enabled-background-color: @toolbar-button-hover-background-color;
-@toolbar-button-enabled-icon-color: rgba(13, 134, 121, 1);
-@toolbar-button-enabled-text-color: rgba(13, 134, 121, 1);
+@toolbar-button-enabled-icon-color: @primary-700;
+@toolbar-button-enabled-text-color: @primary-700;
 
-@toolbar-button-disabled-background-color: @toolbar-button-background-color;
-@toolbar-button-disabled-icon-color: fade(@toolbar-button-icon-color, 50%);
-@toolbar-button-disabled-text-color: fade(@toolbar-button-text-color, 50%);
+@toolbar-button-bespoke-background-color: transparent;
 //
 // Toolbar
 //
 @toolbar-background-color: @background-color;
-@toolbar-padding-y: 1px;
-@toolbar-padding-x: @pad-sm;
-@toolbar-row-separator-color: @tinymce-separator-color;
-@toolbar-row-separator-padding: @toolbar-group-padding-x;
-@toolbar-separator-distance: 0px;
 @toolbar-separator-color: rgba(@color-black, 0.1);
 //
 // TOOLBAR GROUP
 //
-@toolbar-group-padding-x: 11px;
-@toolbar-group-spacing-y: 0;
 @toolbar-group-separator-color: rgba(@color-black, 0.1);
