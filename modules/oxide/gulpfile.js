@@ -54,7 +54,7 @@ gulp.task('copyTinymce', function (done) {
       chalk.yellow('Run yarn build in the repository root to build a local version of TinyMCE'),
     );
     const url =
-      'https://cdn.tiny.cloud/1/qagffr3pkuv17a8on1afax661irst1hbr4e6tbv888sz91jc/tinymce/5-dev/tinymce.min.js';
+      'https://cdn.tiny.cloud/1/qagffr3pkuv17a8on1afax661irst1hbr4e6tbv888sz91jc/tinymce/7-dev/tinymce.min.js';
     const html = fs.readFileSync('./build/index.html', 'utf8');
     fs.writeFileSync('./build/index.html', html.replace('/tinymce/tinymce.min.js', url));
     done();

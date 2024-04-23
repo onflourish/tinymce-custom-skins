@@ -45,7 +45,7 @@
         plugins:
           'accordion advlist advtemplate anchor autolink autosave charmap charmap code directionality emoticons export fullscreen image importcss insertdatetime link lists media nonbreaking pagebreak pageembed preview save searchreplace table template visualblocks visualchars wordcount',
         toolbar:
-          'undo redo | formatselect | fontselect fontsizeselect | bold italic underline strikethrough | link image media pageembed | align outdent indent bullist numlist accordion',
+          'undo redo | blocks | fontfamily fontsize | bold italic underline strikethrough | link image media pageembed | align outdent indent bullist numlist accordion',
         toolbar_mode: 'floating',
         toolbar_sticky: true,
         height: 900,
@@ -54,6 +54,7 @@
         skin_url: '/skins/ui/' + skin,
         content_css: '/skins/content/' + contentcss + '/content.css',
         icons: 'thin',
+        font_size_formats: '10pt 12pt 15pt 17pt 21pt 25pt 30pt 36pt',
       });
 
       function addOptionTo(select) {
