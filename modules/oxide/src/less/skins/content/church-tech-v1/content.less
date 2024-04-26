@@ -2,8 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 
-@media screen {
-  html {
+html {
+  @media screen {
     align-items: center;
     background-color: #f9fafb;
     display: flex;
@@ -15,10 +15,8 @@
 body {
   font-family: 'Inter', sans-serif;
   font-size: @minor-third-body;
-}
 
-@media screen {
-  body {
+  @media screen {
     background-color: #fff;
     box-shadow: 0 1px 2px 0 rgba(2, 15, 13, 0.08);
     line-height: 1.6;
@@ -53,10 +51,4 @@ h5 {
 
 h6 {
   font-size: @minor-third-h6;
-}
-
-.lockedtext {
-  border: 0.5px dashed gray;
-  border-radius: 5px;
-  padding: 2px;
 }
