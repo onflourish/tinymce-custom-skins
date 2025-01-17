@@ -2,7 +2,26 @@
 // Color picker
 //
 
+//
+// Place your variables here
+//
+
+@color-picker-warning-frame-background-color: mix(@background-color, @color-error, 80%);
+@color-picker-warning-frame-text-color: mix(@text-color, @color-error, 50%);
+@color-picker-warning-frame-border-color: mix(@background-color, @color-error, 70%);
+@color-picker-warning-frame-border: 1px solid @color-picker-warning-frame-border-color;
+
 .tox {
+  .tox-hue-slider,
+  .tox-rgb-form .tox-rgba-preview {
+
+    @media (forced-colors: active) {
+      background-color: currentColor !important;
+      border: 1px solid highlight !important;
+      forced-color-adjust: none;
+    }
+  }
+
   .tox-color-picker-container {
     display: flex;
     flex-direction: row;
@@ -89,12 +108,43 @@
   }
 
   .tox-rgb-form input {
-    width: 6em;
+    min-width: 6em;
   }
 
   .tox-rgb-form input.tox-invalid {
     /* Need !important to override Chrome's focus styling unfortunately */
-    border: 1px solid red !important;
+    border: 1px solid @color-error-element-focus-color !important;
+    box-shadow: @color-error-element-focus;
+  }
+
+  .tox-rgb-container {
+    position: relative;
+  }
+
+  .tox-rgb-form .tox-invalid-icon {
+    align-content: center;
+    align-items: center;
+    display: none;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    .tox-control-wrap__status-icon-invalid {
+      margin: 0;
+    }
+  }
+
+  .tox-rgb-warning-note {
+    background-color: @color-picker-warning-frame-background-color;
+    border: @color-picker-warning-frame-border;
+    border-radius: 3px;
+    color: @color-picker-warning-frame-text-color;
+    padding: 3px;
+  }
+
+  input.tox-invalid + .tox-invalid-icon {
+    display: flex;
   }
 
   .tox-rgb-form .tox-rgba-preview {

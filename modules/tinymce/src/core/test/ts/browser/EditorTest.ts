@@ -1,4 +1,4 @@
-import { UiFinder } from '@ephox/agar';
+import { UiFinder, Waiter } from '@ephox/agar';
 import { context, describe, it } from '@ephox/bedrock-client';
 import { Fun } from '@ephox/katamari';
 import { PlatformDetection } from '@ephox/sand';
@@ -401,7 +401,8 @@ describe('browser.tinymce.core.EditorTest', () => {
     assert.isFalse(editor.isDirty(), 'setDirty/isDirty');
 
     editor.setDirty(true);
-    assert.equal(lastArgs?.type, 'dirty', 'setDirty/isDirty');
+    // Use type assertion to satisfy TypeScript and handle potential undefined lastArgs
+    assert.equal(lastArgs ? (lastArgs as EditorEvent<{}>).type : undefined, 'dirty', 'setDirty/isDirty');
     assert.isTrue( editor.isDirty(), 'setDirty/isDirty');
 
     lastArgs = undefined;
@@ -431,14 +432,43 @@ describe('browser.tinymce.core.EditorTest', () => {
     assert.equal(clickCount, 1, 'setMode');
 
     editor.mode.set('readonly');
-    assert.isTrue(isDisabled('.tox-editor-container button:last-of-type'), 'setMode');
+    assert.isFalse(isDisabled('.tox-editor-container button:last-of-type'), 'setMode');
     editor.dom.dispatch(editor.getBody(), 'click');
-    assert.equal(clickCount, 1, 'setMode');
+    assert.equal(clickCount, 2, 'setMode');
 
     editor.mode.set('design');
     editor.dom.dispatch(editor.getBody(), 'click');
     assert.isFalse(isDisabled('.tox-editor-container button:last-of-type'), 'setMode');
-    assert.equal(clickCount, 2, 'setMode');
+    assert.equal(clickCount, 3, 'setMode');
+  });
+
+  it('TINY-11488: Verifies click event behavior in disabled and enabled editor states', async () => {
+    const editor = hook.editor();
+    let clickCount = 0;
+
+    const isDisabled = (selector: string) => {
+      const elm = UiFinder.findIn(SugarBody.body(), selector);
+      return elm.forall((elm) => Attribute.has(elm, 'disabled') || Class.has(elm, 'tox-tbtn--disabled'));
+    };
+
+    editor.on('click', () => {
+      clickCount++;
+    });
+
+    editor.dom.dispatch(editor.getBody(), 'click');
+    assert.equal(clickCount, 1, 'Click should be counted in enabled state');
+
+    editor.options.set('disabled', true);
+    await Waiter.pWait(0);
+    assert.isTrue(isDisabled('.tox-editor-container button:last-of-type'), 'Button should be disabled in disabled mode');
+    editor.dom.dispatch(editor.getBody(), 'click');
+    assert.equal(clickCount, 1, 'Click should not be counted in disabled state');
+
+    editor.options.set('disabled', false);
+    await Waiter.pWait(0);
+    editor.dom.dispatch(editor.getBody(), 'click');
+    assert.isFalse(isDisabled('.tox-editor-container button:last-of-type'), 'Button should remain enabled in enabled state');
+    assert.equal(clickCount, 2, 'Click should be counted in re-enabled state');
   });
 
   it('TBA: translate', () => {
@@ -500,6 +530,16 @@ describe('browser.tinymce.core.EditorTest', () => {
     const editor = hook.editor();
     editor.setContent('<img src="data:image/gif;base64,R0ÖlGODdhIAAgAIABAP8AAP///ywAAAAAIAAgAAACHoSPqcvtD6OctNqLs968+w+G4kiW5omm6sq27gubBQA7AA==%A0">');
     TinyAssertions.assertContent(editor, '<p><img src="data:image/gif;base64,R0"></p>');
+  });
+
+  it('TINY-10955: multiple comments will not cause unexpected newlines', () => {
+    const editor = hook.editor();
+    editor.setContent('<div>A</div><!--Comment1--><!--Comment2--><div>B</div>');
+    TinyAssertions.assertRawContent(editor, '<div>A</div><!--Comment1--><!--Comment2--><div>B</div>');
+    editor.setContent('<div>A</div> <!--Comment1--> <!--Comment2--> <div>B</div>');
+    TinyAssertions.assertRawContent(editor, '<div>A</div><!--Comment1--><!--Comment2--><div>B</div>');
+    editor.setContent('<div>A</div>\n<!--Comment1-->\n<!--Comment2-->\n<div>B</div>');
+    TinyAssertions.assertRawContent(editor, '<div>A</div><!--Comment1--><!--Comment2--><div>B</div>');
   });
 
   context('hasPlugin', () => {

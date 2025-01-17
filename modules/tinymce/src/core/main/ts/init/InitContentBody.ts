@@ -27,6 +27,7 @@ import * as TouchEvents from '../events/TouchEvents';
 import * as ForceBlocks from '../ForceBlocks';
 import * as NonEditableFilter from '../html/NonEditableFilter';
 import * as KeyboardOverrides from '../keyboard/KeyboardOverrides';
+import * as Disabled from '../mode/Disabled';
 import { NodeChange } from '../NodeChange';
 import * as Paste from '../paste/Paste';
 import * as Rtc from '../Rtc';
@@ -73,6 +74,7 @@ const mkParserSettings = (editor: Editor): DomParserSettings => {
     allow_svg_data_urls: getOption('allow_svg_data_urls'),
     allow_html_in_named_anchor: getOption('allow_html_in_named_anchor'),
     allow_script_urls: getOption('allow_script_urls'),
+    allow_mathml_annotation_encodings: getOption('allow_mathml_annotation_encodings'),
     allow_unsafe_link_target: getOption('allow_unsafe_link_target'),
     convert_unsafe_embeds: getOption('convert_unsafe_embeds'),
     convert_fonts_to_spans: getOption('convert_fonts_to_spans'),
@@ -262,6 +264,9 @@ const initEditor = (editor: Editor) => {
     initInstanceCallback.call(editor, editor);
   }
   autoFocus(editor);
+  if (Disabled.isDisabled(editor)) {
+    Disabled.toggleDisabled(editor, true);
+  }
 };
 
 const getStyleSheetLoader = (editor: Editor): StyleSheetLoader =>
@@ -421,7 +426,7 @@ const contentBodyLoaded = (editor: Editor): void => {
   editor.readonly = Options.isReadOnly(editor);
   editor._editableRoot = Options.hasEditableRoot(editor);
 
-  if (!editor.readonly && editor.hasEditableRoot()) {
+  if (!Options.isDisabled(editor) && editor.hasEditableRoot()) {
     if (editor.inline && DOM.getStyle(body, 'position', true) === 'static') {
       body.style.position = 'relative';
     }
@@ -482,6 +487,7 @@ const contentBodyLoaded = (editor: Editor): void => {
 
   setupRtcThunk.fold(() => {
     const cancelProgress = startProgress(editor);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     loadContentCss(editor).then(() => {
       initEditorWithInitialContent(editor);
       cancelProgress();
@@ -489,6 +495,7 @@ const contentBodyLoaded = (editor: Editor): void => {
   }, (setupRtc) => {
     editor.setProgressState(true);
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     loadContentCss(editor).then(() => {
       setupRtc().then((_rtcMode) => {
         editor.setProgressState(false);

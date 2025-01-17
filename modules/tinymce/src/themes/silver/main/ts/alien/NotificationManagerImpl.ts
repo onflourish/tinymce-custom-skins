@@ -1,6 +1,6 @@
-import { AddEventsBehaviour, AlloyComponent, AlloyEvents, Behaviour, Boxes, Docking, Gui, GuiFactory, InlineView, Keying, MaxHeight, Replacing } from '@ephox/alloy';
+import { AlloyComponent, Behaviour, Boxes, Docking, Gui, GuiFactory, InlineView, Keying, MaxHeight, Replacing } from '@ephox/alloy';
 import { Arr, Optional, Singleton, Type } from '@ephox/katamari';
-import { SugarElement, SugarLocation, Traverse } from '@ephox/sugar';
+import { Css, SugarElement, SugarLocation, Traverse, Width } from '@ephox/sugar';
 
 import Editor from 'tinymce/core/api/Editor';
 import { NotificationApi, NotificationManagerImpl, NotificationSpec } from 'tinymce/core/api/NotificationManager';
@@ -23,9 +23,22 @@ export default (
 ): NotificationManagerImpl => {
   const sharedBackstage = extras.backstage.shared;
 
+  const getBoundsContainer = () => SugarElement.fromDom(editor.queryCommandValue('ToggleView') === '' ? editor.getContentAreaContainer() : editor.getContainer());
+
   const getBounds = () => {
-    const contentArea = Boxes.box(SugarElement.fromDom(editor.getContentAreaContainer()));
+    const contentArea = Boxes.box(getBoundsContainer());
     return Optional.some(contentArea);
+  };
+
+  const clampComponentsToBounds = (components: AlloyComponent[]) => {
+    getBounds().each((bounds) => {
+      Arr.each(components, (comp) => {
+        Css.remove(comp.element, 'width');
+        if (Width.get(comp.element) > bounds.width) {
+          Css.set(comp.element, 'width', bounds.width + 'px');
+        }
+      });
+    });
   };
 
   const open = (settings: NotificationSpec, closeCallback: () => void, isEditorOrUIFocused: () => boolean): NotificationApi => {
@@ -95,12 +108,8 @@ export default (
           inlineBehaviours: Behaviour.derive([
             Keying.config({
               mode: 'cyclic',
+              selector: '.tox-notification, .tox-notification a, .tox-notification button',
             }),
-            AddEventsBehaviour.config('notification-events', [
-              AlloyEvents.runOnAttached((comp) => {
-                editor.shortcuts.add('alt+F12', 'focus on notification region', () => Keying.focusIn(comp));
-              }),
-            ]),
             Replacing.config({}),
             ...(
               Options.isStickyToolbar(editor) && !sharedBackstage.header.isPositionedAtTop()
@@ -108,7 +117,7 @@ export default (
                 : [
                   Docking.config({
                     contextual: {
-                      lazyContext: () => Optional.some(Boxes.box(SugarElement.fromDom(editor.getContentAreaContainer()))),
+                      lazyContext: () => Optional.some(Boxes.box(getBoundsContainer())),
                       fadeInClass: 'tox-notification-container-dock-fadein',
                       fadeOutClass: 'tox-notification-container-dock-fadeout',
                       transitionClass: 'tox-notification-container-dock-transition'
@@ -159,6 +168,7 @@ export default (
         Replacing.append(notificationWrapper, notificationSpec);
         InlineView.reposition(notificationWrapper);
         Docking.refresh(notificationWrapper);
+        clampComponentsToBounds(notificationWrapper.components());
       });
     }
 
@@ -172,6 +182,7 @@ export default (
       notificationRegion.on((region) => {
         InlineView.reposition(region);
         Docking.refresh(region);
+        clampComponentsToBounds(region.components());
       });
     };
 

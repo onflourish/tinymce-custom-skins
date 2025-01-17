@@ -1,5 +1,5 @@
 import { afterEach, before, describe, it } from '@ephox/bedrock-client';
-import { Arr } from '@ephox/katamari';
+import { Arr, Num } from '@ephox/katamari';
 import { LegacyUnit, TinyAssertions, TinyHooks } from '@ephox/wrap-mcagar';
 import { assert } from 'chai';
 
@@ -30,7 +30,7 @@ const assertResult = (editor: Editor, title: string, uploadUri: string, uploaded
 };
 
 const random = (min: number, max: number) =>
-  Math.round(Math.random() * (max - min) + min);
+  Math.round(Num.random() * (max - min) + min);
 
 const randBlobDataUri = (width: number, height: number) => {
   const canvas = document.createElement('canvas');
@@ -274,7 +274,7 @@ describe('browser.tinymce.core.EditorUploadTest', () => {
         assert.include(img.src, 'custom.png?size=small&', 'Check the cache invalidation string was added');
         assert.equal(editor.getContent(), '<p><img src="custom.png?size=small"></p>', 'uploadImages reuse filename');
         editor.options.unset('images_reuse_filename');
-      });
+      }, () => assert.fail());
     });
   });
 

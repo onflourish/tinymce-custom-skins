@@ -4,6 +4,7 @@ import Editor from 'tinymce/core/api/Editor';
 import { Dialog } from 'tinymce/core/api/ui/Ui';
 
 import * as Options from '../api/Options';
+import * as Actions from '../core/Actions';
 import { ListOptions } from '../core/ListOptions';
 import * as Utils from '../core/Utils';
 import { DialogChanges } from './DialogChanges';
@@ -15,7 +16,7 @@ const handleSubmit = (editor: Editor, info: LinkDialogInfo) => (api: Dialog.Dial
   const data: LinkDialogData = api.getData();
 
   if (!data.url.value) {
-    Utils.unlink(editor);
+    Actions.unlink(editor);
     // Temporary fix. TODO: TINY-2811
     api.close();
     return;
@@ -39,8 +40,9 @@ const handleSubmit = (editor: Editor, info: LinkDialogInfo) => (api: Dialog.Dial
     attach: data.url.meta !== undefined && data.url.meta.attach ? data.url.meta.attach : Fun.noop
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   DialogConfirms.preprocess(editor, changedData).then((pData) => {
-    Utils.link(editor, attachState, pData);
+    Actions.link(editor, attachState, pData);
   });
 
   api.close();
@@ -152,6 +154,7 @@ const makeDialog = (settings: LinkDialogInfo, onSubmit: (api: Dialog.DialogInsta
 
 const open = (editor: Editor): void => {
   const data = collectData(editor);
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   data.then((info) => {
     const onSubmit = handleSubmit(editor, info);
     return makeDialog(info, onSubmit, editor);

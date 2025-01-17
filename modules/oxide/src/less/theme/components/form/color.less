@@ -16,7 +16,7 @@
     }
 
     span {
-      border-color: rgba(red(@color-black), green(@color-black), blue(@color-black), .2);
+      border-color: rgba(red(@color-black) green(@color-black) blue(@color-black) / 20%);
       border-radius: @color-input-swatch-border-radius;
       border-style: solid;
       border-width: 1px;
@@ -26,6 +26,12 @@
       position: absolute;
       top: 6px;
       width: $height;
+
+      @media (forced-colors: active) {
+        border-color: currentColor;
+        border-width: 2px !important;
+        forced-color-adjust: none;
+      }
 
       &:hover:not([aria-disabled=true]),
       &:focus:not([aria-disabled=true]) {
@@ -51,6 +57,10 @@
         top: -1px;
         width: $height;
         z-index: -1;
+
+        @media (forced-colors: active) {
+          border: none;
+        }
       }
     }
 
@@ -66,7 +76,6 @@
       padding-left: @textfield-height;
     }
 
-    /* stylelint-disable-next-line no-descending-specificity */
     span {
       left: 6px;
     }
@@ -80,7 +89,6 @@
       padding-right: @textfield-height;
     }
 
-    /* stylelint-disable-next-line no-descending-specificity */
     span {
       right: 6px;
     }

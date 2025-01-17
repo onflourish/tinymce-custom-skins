@@ -1,4 +1,5 @@
 import { Arr, Fun, Optional } from '@ephox/katamari';
+import { Focus, SugarElement } from '@ephox/sugar';
 
 import * as EditorView from '../EditorView';
 import * as EditorFocus from '../focus/EditorFocus';
@@ -144,7 +145,7 @@ const NotificationManager = (editor: Editor): NotificationManager => {
 
     // NodeChange is needed for inline mode and autoresize as the positioning is done
     // from the bottom up, which changes when the content in the editor changes.
-    editor.on('show ResizeEditor NodeChange', () => {
+    editor.on('show ResizeEditor ResizeWindow NodeChange ToggleView FullscreenStateChanged', () => {
       requestAnimationFrame(reposition);
     });
 
@@ -152,6 +153,17 @@ const NotificationManager = (editor: Editor): NotificationManager => {
       Arr.each(notifications.slice(), (notification) => {
         getImplementation().close(notification);
       });
+    });
+
+    editor.on('keydown', (e) => {
+      // TODO: TINY-11429 Remove this once we remove the use of keycodes
+      const isF12 = e.key?.toLowerCase() === 'f12' || e.keyCode === 123;
+      if (e.altKey && isF12) {
+        e.preventDefault();
+        getTopNotification()
+          .map((notificationApi) => SugarElement.fromDom(notificationApi.getEl()))
+          .each((elm) => Focus.focus(elm));
+      }
     });
   };
 

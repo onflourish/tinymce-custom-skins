@@ -29,7 +29,7 @@ interface Helpers {
   readonly imageSize: (url: string) => Promise<Size>;
   readonly addToBlobCache: (blobInfo: BlobInfo) => void;
   readonly createBlobCache: (file: File, blobUri: string, dataUrl: string) => BlobInfo;
-  readonly alertErr: (message: string) => void;
+  readonly alertErr: (message: string, callback: () => void) => void;
   readonly normalizeCss: (cssText: string | undefined) => string;
   readonly parseStyle: (cssText: string) => StyleMap;
   readonly serializeStyle: (stylesArg: StyleMap, name?: string) => string;
@@ -235,8 +235,10 @@ const changeFileInput = (helpers: Helpers, info: ImageDialogInfo, state: ImageDi
         api.setData({ src: { value: url, meta: {}}});
         api.showTab('general');
         changeSrc(helpers, info, state, api);
+        api.focus('src');
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       Utils.blobToDataUri(file).then((dataUrl) => {
         const blobInfo = helpers.createBlobCache(file, blobUri, dataUrl);
         if (info.automaticUploads) {
@@ -245,7 +247,9 @@ const changeFileInput = (helpers: Helpers, info: ImageDialogInfo, state: ImageDi
             finalize();
           }).catch((err) => {
             finalize();
-            helpers.alertErr(err);
+            helpers.alertErr(err, () => {
+              api.focus('fileinput');
+            });
           });
         } else {
           helpers.addToBlobCache(blobInfo);
@@ -305,6 +309,7 @@ const submitHandler = (editor: Editor, info: ImageDialogInfo, helpers: Helpers) 
   };
 
   editor.execCommand('mceUpdateImage', false, toImageData(finalData, info.hasAccessibilityOptions));
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   editor.editorUpload.uploadImagesAuto();
 
   api.close();
@@ -335,8 +340,8 @@ const addToBlobCache = (editor: Editor) => (blobInfo: BlobInfo): void => {
   editor.editorUpload.blobCache.add(blobInfo);
 };
 
-const alertErr = (editor: Editor) => (message: string): void => {
-  editor.windowManager.alert(message);
+const alertErr = (editor: Editor) => (message: string, callback: () => void): void => {
+  editor.windowManager.alert(message, callback);
 };
 
 const normalizeCss = (editor: Editor) => (cssText: string | undefined): string =>
@@ -371,6 +376,7 @@ export const Dialog = (editor: Editor): { open: () => void } => {
     uploadImage: uploadImage(editor)
   };
   const open = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     collect(editor)
       .then((info: ImageDialogInfo): DialogType.DialogSpec<ImageDialogData> => {
         const state = createState(info);

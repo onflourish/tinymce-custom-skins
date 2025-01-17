@@ -11,7 +11,13 @@ const setup = (editor: Editor): void => {
 
   // This is a thunk so that they reflect changes in the underlying options each time they are requested.
   const getPatternSet = () => Pattern.createPatternSet(
-    Options.getTextPatterns(editor),
+    Options.getTextPatterns(editor)
+      .filter((pattern) => {
+        if (pattern.type === 'inline-command' || pattern.type === 'block-command') {
+          return editor.queryCommandSupported(pattern.cmd);
+        }
+        return true;
+      }),
     Options.getTextPatternsLookup(editor)
   );
 
@@ -19,7 +25,7 @@ const setup = (editor: Editor): void => {
   const hasDynamicPatterns = () => Options.hasTextPatternsLookup(editor);
 
   editor.on('keydown', (e) => {
-    if (e.keyCode === 13 && !VK.modifierPressed(e) && editor.selection.isCollapsed()) {
+    if (e.keyCode === 13 && !VK.modifierPressed(e) && editor.selection.isCollapsed() && editor.selection.isEditable()) {
       const patternSet = Pattern.filterByTrigger(getPatternSet(), 'enter');
       // Do not process anything if we don't have any inline patterns, block patterns,
       // or dynamic lookup defined
@@ -34,7 +40,7 @@ const setup = (editor: Editor): void => {
   }, true);
 
   editor.on('keydown', (e) => {
-    if (e.keyCode === 32 && editor.selection.isCollapsed()) {
+    if (e.keyCode === 32 && editor.selection.isCollapsed() && editor.selection.isEditable()) {
       const patternSet = Pattern.filterByTrigger(getPatternSet(), 'space');
       const hasPatterns = patternSet.blockPatterns.length > 0 || hasDynamicPatterns();
 
@@ -45,7 +51,7 @@ const setup = (editor: Editor): void => {
   }, true);
 
   const handleInlineTrigger = () => {
-    if (editor.selection.isCollapsed()) {
+    if (editor.selection.isCollapsed() && editor.selection.isEditable()) {
       const patternSet = Pattern.filterByTrigger(getPatternSet(), 'space');
 
       // Do not process anything if we don't have any inline patterns or dynamic lookup defined

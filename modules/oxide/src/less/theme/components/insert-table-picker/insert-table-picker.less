@@ -39,6 +39,12 @@
 
   // Selected cell
   .tox-insert-table-picker .tox-insert-table-picker__selected {
+
+    @media (forced-colors: active) {
+      border-color: Highlight;
+      filter: contrast(50%);
+    }
+
     background-color: @insert-table-picker-selected-background-color;
     border-color: @insert-table-picker-selected-border-color;
   }
@@ -56,7 +62,6 @@
 
 .tox:not([dir=rtl]) {
   // Remove border on last cell of every row
-  /* stylelint-disable-next-line no-descending-specificity */
   .tox-insert-table-picker > div {
     &:nth-child(10n) {
       border-right: 0;
@@ -66,7 +71,6 @@
 
 // RTL
 .tox[dir=rtl] {
-  /* stylelint-disable-next-line no-descending-specificity */
   .tox-insert-table-picker > div {
     &:nth-child(10n+1) {
       border-right: 0;

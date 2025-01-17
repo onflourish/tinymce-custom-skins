@@ -30,6 +30,7 @@ describe('headless.tinymce.themes.silver.toolbar.SearchableMenuButtonTest', () =
     (store, _doc, _body) => GuiFactory.build(
       renderMenuButton(
         {
+          context: 'any',
           text: Optional.some('MailMerge'),
           icon: Optional.none(),
           tooltip: Optional.none(),
@@ -40,9 +41,10 @@ describe('headless.tinymce.themes.silver.toolbar.SearchableMenuButtonTest', () =
             collapseSearchResults: true
           }, store)
         },
-        'prefix',
-        extrasHook.access().extras.backstages.popup,
-        Optional.none()
+        {
+          prefix: 'prefix',
+          backstage: extrasHook.access().extras.backstages.popup
+        }
       )
     )
 

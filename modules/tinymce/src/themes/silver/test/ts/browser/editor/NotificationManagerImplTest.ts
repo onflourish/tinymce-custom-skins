@@ -1,6 +1,6 @@
 import { ApproxStructure, Assertions, FocusTools, Keys, Mouse, UiFinder, Waiter } from '@ephox/agar';
 import { context, describe, it } from '@ephox/bedrock-client';
-import { Arr, Strings } from '@ephox/katamari';
+import { Arr, Fun, Strings } from '@ephox/katamari';
 import { Css, Focus, Scroll, SugarBody, SugarDocument, SugarElement, SugarLocation, Traverse } from '@ephox/sugar';
 import { TinyContentActions, TinyDom, TinyHooks, TinyUiActions } from '@ephox/wrap-mcagar';
 import { assert } from 'chai';
@@ -269,6 +269,10 @@ describe('browser.tinymce.themes.silver.editor.NotificationManagerImplTest', () 
       const hasFocus = (node: Node) => Focus.search(SugarElement.fromDom(node)).isSome();
       TinyContentActions.keystroke(editor, 123, { alt: true });
 
+      await FocusTools.pTryOnSelector('Notification has focus', doc, '.tox-notification');
+      assert.isTrue(hasFocus(notification.getEl()), 'Focus should be on notification 1');
+
+      TinyUiActions.keystroke(editor, Keys.tab());
       await FocusTools.pTryOnSelector('Link in notification has focus', doc, 'a[href="example.com"]');
       assert.isTrue(hasFocus(notification.getEl()), 'Focus should be on notification 1');
 
@@ -281,6 +285,11 @@ describe('browser.tinymce.themes.silver.editor.NotificationManagerImplTest', () 
       assert.isTrue(hasFocus(notification.getEl()), 'Focus should be on notification 1');
 
       TinyUiActions.keystroke(editor, Keys.tab());
+      TinyUiActions.keystroke(editor, Keys.tab());
+
+      await FocusTools.pTryOnSelector('Notification has focus', doc, '.tox-notification');
+      assert.isTrue(hasFocus(notification2.getEl()), 'Focus should be on notification 2');
+
       TinyUiActions.keystroke(editor, Keys.tab());
       await FocusTools.pTryOnSelector('Dismiss button in notification 2 has focus', doc, '.tox-notification__dismiss');
       assert.isTrue(hasFocus(notification2.getEl()), 'Focus should be on notification 2');
@@ -298,7 +307,7 @@ describe('browser.tinymce.themes.silver.editor.NotificationManagerImplTest', () 
       const hasFocus = (node: Node) => Focus.search(SugarElement.fromDom(node)).isSome();
       TinyContentActions.keystroke(editor, 123, { alt: true });
 
-      await FocusTools.pTryOnSelector('Dismiss button in notification has focus', doc, '.tox-notification__dismiss');
+      await FocusTools.pTryOnSelector('Notification has focus', doc, '.tox-notification');
       assert.isTrue(hasFocus(notification.getEl()), 'Focus should on notification 1');
 
       TinyUiActions.keystroke(editor, Keys.escape());
@@ -307,6 +316,18 @@ describe('browser.tinymce.themes.silver.editor.NotificationManagerImplTest', () 
       assert.isTrue(editor.hasFocus(), 'Focus should be on the editor');
 
       notification.close();
+    });
+
+    it('TINY-11661: Not specifying a type should fallback to \'info\'', () => {
+      const editor = hook.editor();
+      const notification = editor.notificationManager.open({ text: 'My test notification' });
+      assertStructure('Check notification structure', notification, 'info', 'My test notification');
+    });
+
+    it('TINY-11661: Specifying unsupported type should fallback to \'info\'', () => {
+      const editor = hook.editor();
+      const notification = editor.notificationManager.open({ text: 'My test notification', type: 'madeuptype' as 'info' | 'warning' | 'error' | 'success' });
+      assertStructure('Check notification structure', notification, 'info', 'My test notification');
     });
   });
 
@@ -346,6 +367,113 @@ describe('browser.tinymce.themes.silver.editor.NotificationManagerImplTest', () 
 
       nError.close();
       nWarn.close();
+    });
+  });
+
+  context('Width clamping', () => {
+    const longMessage = Arr.range(100, (_) => 'hello').join(' ');
+
+    context('Resize notification to editor width', () => {
+      const hook = TinyHooks.bddSetup<Editor>({
+        base_url: '/project/tinymce/js/tinymce',
+        width: 600,
+        height: 400
+      }, []);
+
+      it('TINY-10886: Should clamp the notification width to the width of the editor', async () => {
+        const editor = hook.editor();
+        const nError = openNotification(editor, 'error', longMessage);
+        const nWarn = openNotification(editor, 'warning', 'hello');
+
+        assert.approximately(nError.getEl().clientWidth, 600, 10, 'Should be roughly the width of the editor');
+        assert.isBelow(nWarn.getEl().clientWidth, 500, 'Should be lower than editor width');
+
+        nError.close();
+        nWarn.close();
+      });
+    });
+
+    context('Resize notification width down', () => {
+      const hook = TinyHooks.bddSetup<Editor>({
+        base_url: '/project/tinymce/js/tinymce',
+        resize: 'both',
+        width: 600,
+        height: 400
+      }, []);
+
+      it('TINY-10894: Should resize the notification width to the smaller editor size on editor resize', async () => {
+        const editor = hook.editor();
+        const resizeHandle = UiFinder.findIn(SugarBody.body(), '.tox-statusbar__resize-handle').getOrDie();
+        const nError = openNotification(editor, 'error', longMessage);
+
+        const beforeResizeWidth = nError.getEl().clientWidth;
+        assert.approximately(beforeResizeWidth, 600, 10, 'Should be roughly the width of the editor');
+
+        Mouse.mouseDown(resizeHandle);
+        resizeToPos(600, 400, 300, 300);
+        await Waiter.pTryUntil('Waited for notification width to change', () => {
+          assert.isBelow(nError.getEl().clientWidth, beforeResizeWidth, 'Should be less than the previous width');
+        });
+      });
+    });
+
+    context('Resize notification width up', () => {
+      const hook = TinyHooks.bddSetup<Editor>({
+        base_url: '/project/tinymce/js/tinymce',
+        resize: 'both',
+        width: 600,
+        height: 400
+      }, []);
+
+      it('TINY-10894: Should resize the notification width to the smaller editor size on editor resize', async () => {
+        const editor = hook.editor();
+        const resizeHandle = UiFinder.findIn(SugarBody.body(), '.tox-statusbar__resize-handle').getOrDie();
+        const nError = openNotification(editor, 'error', longMessage);
+
+        const beforeResizeWidth = nError.getEl().clientWidth;
+        assert.approximately(beforeResizeWidth, 600, 10, 'Should be roughly the width of the editor');
+
+        Mouse.mouseDown(resizeHandle);
+        resizeToPos(600, 400, 800, 300);
+        await Waiter.pTryUntil('Waited for notification width to change', () => {
+          assert.isAbove(nError.getEl().clientWidth, beforeResizeWidth, 'Should be greater than the previous width');
+        });
+      });
+    });
+
+    context('Resize notification for views', () => {
+      const hook = TinyHooks.bddSetup<Editor>({
+        base_url: '/project/tinymce/js/tinymce',
+        width: 600,
+        height: 400,
+        setup: (editor: Editor) => {
+          editor.ui.registry.addView('test', {
+            onShow: Fun.noop,
+            onHide: Fun.noop
+          });
+        }
+      }, []);
+
+      it('TINY-10894: Should resize the notification width when togging view', async () => {
+        const editor = hook.editor();
+        const nError = openNotification(editor, 'error', longMessage);
+
+        const beforeResizeTop = nError.getEl().getBoundingClientRect().top;
+
+        editor.execCommand('ToggleView', false, 'test');
+
+        await Waiter.pTryUntil('Waited for notification width to change', () => {
+          assert.isBelow(nError.getEl().getBoundingClientRect().top, beforeResizeTop, 'Should move the notification up since the toolbar is hidden');
+          assert.approximately(nError.getEl().clientWidth, 600, 10, 'Should be roughly the width of the editor');
+        });
+
+        editor.execCommand('ToggleView', false, 'test');
+
+        await Waiter.pTryUntil('Waited for notification width to change', () => {
+          assert.equal(nError.getEl().getBoundingClientRect().top, beforeResizeTop, 'Should move the notification back since they toolbar is shown again');
+          assert.approximately(nError.getEl().clientWidth, 600, 10, 'Should be roughly the width of the editor');
+        });
+      });
     });
   });
 });

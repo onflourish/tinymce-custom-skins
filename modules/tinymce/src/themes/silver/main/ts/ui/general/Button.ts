@@ -4,14 +4,15 @@ import {
   AlloyComponent, AlloyEvents,
   FormField as AlloyFormField,
   AlloySpec, AlloyTriggers, Behaviour,
+  Dropdown,
   GuiFactory, Memento,
-  RawDomSchema, Replacing, SimpleOrSketchSpec, SketchSpec, Tabstopping, Tooltipping
+  RawDomSchema, Replacing, SimpleOrSketchSpec, SketchSpec, SystemEvents, Tabstopping, Tooltipping
 } from '@ephox/alloy';
 import { Dialog, Toolbar } from '@ephox/bridge';
 import { Fun, Merger, Optional, Type } from '@ephox/katamari';
 
 import { UiFactoryBackstage, UiFactoryBackstageProviders } from '../../backstage/Backstage';
-import * as ReadOnly from '../../ReadOnly';
+import * as UiState from '../../UiState';
 import { ComposingConfigs } from '../alien/ComposingConfigs';
 import { DisablingConfigs } from '../alien/DisablingConfigs';
 import { renderFormField } from '../alien/FieldLabeller';
@@ -48,8 +49,8 @@ export const renderCommonSpec = (
 
   const common = {
     buttonBehaviours: Behaviour.derive([
-      DisablingConfigs.button(() => !spec.enabled || providersBackstage.isDisabled()),
-      ReadOnly.receivingConfig(),
+      DisablingConfigs.item(() => !spec.enabled || providersBackstage.checkUiComponentContext(spec.context).shouldDisable),
+      UiState.toggleOnReceive(() => providersBackstage.checkUiComponentContext(spec.context)),
       Tabstopping.config({}),
       ...tooltip.map(
         (t) => Tooltipping.config(
@@ -59,8 +60,7 @@ export const renderCommonSpec = (
         )
       ).toArray(),
       AddEventsBehaviour.config('button press', [
-        AlloyEvents.preventDefault('click'),
-        AlloyEvents.preventDefault('mousedown')
+        AlloyEvents.preventDefault('click')
       ])
     ].concat(extraBehaviours)),
     eventOrder: {
@@ -278,13 +278,26 @@ export const renderFooterButton = (spec: FooterButtonSpec, buttonType: string, b
       fetch: getFetch(menuButtonSpec.items, getButton, backstage)
     };
 
-    const memButton = Memento.record(renderMenuButton(fixedSpec, ToolbarButtonClasses.Button, backstage, Optional.none(), true, spec.text.or(spec.tooltip).getOrUndefined()));
+    const memButton = Memento.record(renderMenuButton(fixedSpec, {
+      prefix: ToolbarButtonClasses.Button,
+      backstage,
+      tabstopping: true,
+      btnName: spec.text.or(spec.tooltip).getOrUndefined(),
+      additionalBehaviours: [
+        AddEventsBehaviour.config('close-on--window-scroll', [
+          AlloyEvents.run(SystemEvents.windowScroll(), (comp, _se) => {
+            Dropdown.close(comp);
+          }),
+        ]),
+      ]
+    }));
 
     return memButton.asSpec();
   } else if (isNormalFooterButtonSpec(spec, buttonType)) {
     const action = getAction(spec.name, buttonType);
     const buttonSpec = {
       ...spec,
+      context: buttonType === 'cancel' ? 'any' : spec.context,
       borderless: false
     };
     return renderButton(buttonSpec, action, backstage.shared.providers, [ ]);

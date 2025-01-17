@@ -3,6 +3,8 @@ import { Adjustments, ResizeBehaviour, ResizeWire, Sizes, TableConversions, Tabl
 import { Attribute, Css, SugarElement } from '@ephox/sugar';
 
 import Editor from 'tinymce/core/api/Editor';
+import { DisabledStateChangeEvent } from 'tinymce/core/api/EventTypes';
+import { EditorEvent } from 'tinymce/core/api/util/EventDispatcher';
 
 import * as Utils from '../core/TableUtils';
 import * as TableWire from '../core/TableWire';
@@ -131,7 +133,11 @@ export const TableResizeHandler = (editor: Editor): TableResizeHandler => {
     if (Options.hasTableObjectResizing(editor) && Options.hasTableResizeBars(editor)) {
       const resizing = lazyResizingBehaviour();
       const sz = TableResize.create(rawWire, resizing, lazySizing);
-      sz.on();
+
+      if (!editor.mode.isReadOnly()) {
+        sz.on();
+      }
+
       sz.events.startDrag.bind((_event) => {
         selectionRng.set(editor.selection.getRng());
       });
@@ -162,7 +168,7 @@ export const TableResizeHandler = (editor: Editor): TableResizeHandler => {
   // If we're updating the table width via the old mechanic, we need to update the constituent cells' widths/heights too.
   editor.on('ObjectResizeStart', (e) => {
     const targetElm = e.target;
-    if (isTable(targetElm)) {
+    if (isTable(targetElm) && !editor.mode.isReadOnly()) {
       const table = SugarElement.fromDom(targetElm);
 
       // Add a class based on the resizing mode
@@ -205,26 +211,30 @@ export const TableResizeHandler = (editor: Editor): TableResizeHandler => {
     }
   });
 
-  editor.on('SwitchMode', () => {
+  const showResizeBars = () => {
     tableResize.on((resize) => {
-      if (editor.mode.isReadOnly()) {
-        resize.hideBars();
-      } else {
-        resize.showBars();
-      }
+      resize.on();
+      resize.showBars();
     });
+  };
+
+  const hideResizeBars = () => {
+    tableResize.on((resize) => {
+      resize.off();
+      resize.hideBars();
+    });
+  };
+
+  editor.on('DisabledStateChange', (e: EditorEvent<DisabledStateChangeEvent>) => {
+    e.state ? hideResizeBars() : showResizeBars();
   });
 
-  editor.on('dragstart dragend', (e) => {
-    tableResize.on((resize) => {
-      if (e.type === 'dragstart') {
-        resize.hideBars();
-        resize.off();
-      } else {
-        resize.on();
-        resize.showBars();
-      }
-    });
+  editor.on('SwitchMode', () => {
+    editor.mode.isReadOnly() ? hideResizeBars() : showResizeBars();
+  });
+
+  editor.on('dragstart dragend', (e: EditorEvent<DragEvent>) => {
+    e.type === 'dragstart' ? hideResizeBars() : showResizeBars();
   });
 
   editor.on('remove', () => {

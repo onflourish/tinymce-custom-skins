@@ -102,6 +102,7 @@ describe('webdriver.tinymce.themes.silver.toolbar.SearchableMenuTypingTest', () 
     (store, _doc, _body) => GuiFactory.build(
       renderMenuButton(
         {
+          context: 'any',
           text: Optional.some('MailMerge'),
           icon: Optional.none(),
           tooltip: Optional.none(),
@@ -114,9 +115,10 @@ describe('webdriver.tinymce.themes.silver.toolbar.SearchableMenuTypingTest', () 
             collapseSearchResults: false
           }, store)
         },
-        'prefix',
-        extrasHook.access().extras.backstages.popup,
-        Optional.none()
+        {
+          prefix: 'prefix',
+          backstage: extrasHook.access().extras.backstages.popup
+        }
       )
     )
   );

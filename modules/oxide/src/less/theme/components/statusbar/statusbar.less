@@ -7,6 +7,7 @@
 @statusbar-font-size: @font-size-sm;
 @statusbar-font-weight: @font-weight-normal;
 @statusbar-height: 25px;
+@statusbar-text-height: 16px;
 @statusbar-padding-x: @pad-sm;
 @statusbar-separator-color: @tinymce-separator-color;
 @statusbar-text-color: contrast(@statusbar-background-color, @text-color-muted, fade(@color-white, 75));
@@ -53,8 +54,10 @@
   }
 
   .tox-statusbar__text-container {
+    align-items: flex-start;
     display: flex;
     flex: 1 1 auto;
+    height: @statusbar-text-height;
     justify-content: space-between;
 
     @media @breakpoint-gt-sm {
@@ -122,10 +125,20 @@
 
   .tox-statusbar__branding {
     svg {
+
+      @media (forced-colors: active) {
+        fill: currentColor;
+      }
+
       fill: @statusbar-logo-color;
-      height: 1.14em;
-      vertical-align: -.28em;
-      width: 3.6em;
+      height: 1em;
+      margin-left: .3em;
+      width: auto;
+    }
+
+    a {
+      align-items: center;
+      display: inline-flex;
     }
 
     a:hover,
@@ -176,6 +189,10 @@
       }
     }
   }
+
+  .tox-statusbar__resize-handle:only-child {
+    margin-left: auto;
+  }
 }
 
 .tox:not([dir=rtl]) {
@@ -196,5 +213,12 @@
 
   .tox-statusbar__path > * {
     margin-left: @pad-xs;
+  }
+
+  .tox-statusbar__branding {
+    svg {
+      margin-left: 0;
+      margin-right: .3em;
+    }
   }
 }

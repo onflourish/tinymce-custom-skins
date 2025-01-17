@@ -92,6 +92,7 @@ export const setup = (editor: Editor): void => {
         commenceIfNecessary(lookupInfo.context);
 
         // Wait for the results to return and then display the menu
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         lookupInfo.lookupData.then((lookupData) => {
           // Lookup the active autocompleter to make sure it's still active, if it isn't then do nothing
           activeAutocompleter.get().map((ac) => {
@@ -99,25 +100,22 @@ export const setup = (editor: Editor): void => {
 
             // Ensure the active autocompleter trigger matches, as the old one may have closed
             // and a new one may have opened. If it doesn't match, then do nothing.
-            if (ac.trigger === context.trigger) {
-              // close if we haven't found any matches in the last 10 chars
-              if (context.text.length - ac.matchLength >= 10) {
-                cancelIfNecessary();
-              } else {
-                activeAutocompleter.set({
-                  ...ac,
-                  matchLength: context.text.length
-                });
+            if (ac.trigger !== context.trigger) {
+              return;
+            }
 
-                if (uiActive.get()) {
-                  Events.fireAutocompleterUpdateActiveRange(editor, { range: context.range });
-                  Events.fireAutocompleterUpdate(editor, { lookupData });
-                } else {
-                  uiActive.set(true);
-                  Events.fireAutocompleterUpdateActiveRange(editor, { range: context.range });
-                  Events.fireAutocompleterStart(editor, { lookupData });
-                }
-              }
+            activeAutocompleter.set({
+              ...ac,
+              matchLength: context.text.length
+            });
+
+            if (uiActive.get()) {
+              Events.fireAutocompleterUpdateActiveRange(editor, { range: context.range });
+              Events.fireAutocompleterUpdate(editor, { lookupData });
+            } else {
+              uiActive.set(true);
+              Events.fireAutocompleterUpdateActiveRange(editor, { range: context.range });
+              Events.fireAutocompleterStart(editor, { lookupData });
             }
           });
         });

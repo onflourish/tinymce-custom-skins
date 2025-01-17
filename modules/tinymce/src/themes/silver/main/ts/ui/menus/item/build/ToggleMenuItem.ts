@@ -41,6 +41,7 @@ const renderToggleMenuItem = (
 
   return Merger.deepMerge(
     renderCommonItem({
+      context: spec.context,
       data: buildData(spec),
       enabled: spec.enabled,
       getApi,
@@ -54,7 +55,8 @@ const renderToggleMenuItem = (
         toggleClass: ItemClasses.tickedClass,
         toggleOnExecute: false,
         selected: spec.active
-      }
+      },
+      role: spec.role.getOrUndefined()
     }
   );
 };

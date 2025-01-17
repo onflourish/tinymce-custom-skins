@@ -19,8 +19,11 @@ describe('browser.tinymce.themes.silver.editor.contexttoolbar.ContextToolbarLook
   const createForm = (): InlineContent.ContextForm => ({
     type: 'contextform',
     initValue: Fun.constant('test'),
+    placeholder: Optional.none(),
     label: Optional.none(),
     launch: Optional.none(),
+    onInput: Fun.noop,
+    onSetup: () => Fun.noop,
     commands: [{
       onAction: Fun.noop,
       original: {
@@ -30,7 +33,8 @@ describe('browser.tinymce.themes.silver.editor.contexttoolbar.ContextToolbarLook
       tooltip: Optional.none(),
       icon: Optional.none(),
       text: Optional.none(),
-      onSetup: () => Fun.noop
+      onSetup: () => Fun.noop,
+      context: 'any'
     }],
     predicate: Fun.always,
     position: 'selection',

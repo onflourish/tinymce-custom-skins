@@ -58,16 +58,22 @@ const isTableCellContentSelected = (dom: DOMUtils, rng: Range, cell: Node | null
   }
 };
 
+const isEditableEmptyBlock = (dom: DOMUtils, node: Node): boolean => {
+  if (dom.isBlock(node) && dom.isEditable(node)) {
+    const childNodes = node.childNodes;
+    return (childNodes.length === 1 && NodeType.isBr(childNodes[0])) || childNodes.length === 0;
+  } else {
+    return false;
+  }
+};
+
 const validInsertion = (editor: Editor, value: string, parentNode: Element): void => {
   // Should never insert content into bogus elements, since these can
   // be resize handles or similar
   if (parentNode.getAttribute('data-mce-bogus') === 'all') {
     parentNode.parentNode?.insertBefore(editor.dom.createFragment(value), parentNode);
   } else {
-    // Check if parent is empty or only has one BR element then set the innerHTML of that parent
-    const node = parentNode.firstChild;
-    const node2 = parentNode.lastChild;
-    if (!node || (node === node2 && node.nodeName === 'BR')) {
+    if (isEditableEmptyBlock(editor.dom, parentNode)) {
       editor.dom.setHTML(parentNode, value);
     } else {
       editor.selection.setContent(value, { no_events: true });
@@ -88,21 +94,28 @@ const reduceInlineTextElements = (editor: Editor, merge: boolean | undefined): v
     const root = editor.getBody();
     const elementUtils = ElementUtils(editor);
 
-    Tools.each(dom.select('*[data-mce-fragment]'), (node) => {
-      const isInline = Type.isNonNullable(textInlineElements[node.nodeName.toLowerCase()]);
-      if (isInline && StyleUtils.hasInheritableStyles(dom, node)) {
-        for (let parentNode = node.parentElement; Type.isNonNullable(parentNode) && parentNode !== root; parentNode = parentNode.parentElement) {
-          // Check if the parent has a style conflict that would prevent the child node from being safely removed,
-          // even if a exact node match could be found further up the tree
-          const styleConflict = StyleUtils.hasStyleConflict(dom, node, parentNode);
-          if (styleConflict) {
-            break;
-          }
+    const fragmentSelector = '*[data-mce-fragment]';
+    const fragments = dom.select(fragmentSelector);
 
-          if (elementUtils.compare(parentNode, node)) {
-            dom.remove(node, true);
-            break;
-          }
+    Tools.each(fragments, (node) => {
+      const isInline = (currentNode: Element) => Type.isNonNullable(textInlineElements[currentNode.nodeName.toLowerCase()]);
+      const hasOneChild = (currentNode: Element) => currentNode.childNodes.length === 1;
+      const hasNoNonInheritableStyles = (currentNode: Element) => !(StyleUtils.hasNonInheritableStyles(dom, currentNode) || StyleUtils.hasConditionalNonInheritableStyles(dom, currentNode));
+
+      if (hasNoNonInheritableStyles(node) && isInline(node) && hasOneChild(node)) {
+        const styles = StyleUtils.getStyleProps(dom, node);
+        const isOverridden = (oldStyles: string[], newStyles: string[]) => Arr.forall(oldStyles, (style) => Arr.contains(newStyles, style));
+        const overriddenByAllChildren = (childNode: Element): boolean => hasOneChild(node) && dom.is(childNode, fragmentSelector) && isInline(childNode) &&
+          (childNode.nodeName === node.nodeName && isOverridden(styles, StyleUtils.getStyleProps(dom, childNode)) || overriddenByAllChildren(childNode.children[0]));
+
+        const identicalToParent = (parentNode: Element | null): boolean => Type.isNonNullable(parentNode) && parentNode !== root
+          && (elementUtils.compare(node, parentNode) || identicalToParent(parentNode.parentElement));
+
+        const conflictWithInsertedParent = (parentNode: Element | null): boolean => Type.isNonNullable(parentNode) && parentNode !== root
+          && dom.is(parentNode, fragmentSelector) && (StyleUtils.hasStyleConflict(dom, node, parentNode) || conflictWithInsertedParent(parentNode.parentElement));
+
+        if (overriddenByAllChildren(node.children[0]) || (identicalToParent(node.parentElement) && !conflictWithInsertedParent(node.parentElement))) {
+          dom.remove(node, true);
         }
       }
     });
@@ -307,6 +320,9 @@ export const insertHtmlAtCaret = (editor: Editor, value: string, details: Insert
     const marker = node;
 
     for (node = node.prev; node; node = node.walk(true)) {
+      if (node.name === 'table') {
+        break;
+      }
       if (node.type === 3 || !dom.isBlock(node.name)) {
         if (node.parent && editor.schema.isValidChild(node.parent.name, 'span')) {
           node.parent.insert(marker, node, node.name === 'br');

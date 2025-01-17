@@ -63,6 +63,22 @@ const fireFontFamilyTextUpdate = (editor: Editor, data: { value: string }): void
   editor.dispatch('FontFamilyTextUpdate', data);
 };
 
+const fireToggleSidebar = (editor: Editor): void => {
+  editor.dispatch('ToggleSidebar');
+};
+
+const fireToggleView = (editor: Editor): void => {
+  editor.dispatch('ToggleView');
+};
+
+const fireContextToolbarClose = (editor: Editor): void => {
+  editor.dispatch('ContextToolbarClose');
+};
+
+const fireContextFormSlideBack = (editor: Editor): void => {
+  editor.dispatch('ContextFormSlideBack');
+};
+
 export {
   fireSkinLoaded,
   fireSkinLoadError,
@@ -78,5 +94,9 @@ export {
   fireFontSizeTextUpdate,
   fireFontSizeInputTextUpdate,
   fireBlocksTextUpdate,
-  fireFontFamilyTextUpdate
+  fireFontFamilyTextUpdate,
+  fireToggleSidebar,
+  fireToggleView,
+  fireContextToolbarClose,
+  fireContextFormSlideBack
 };

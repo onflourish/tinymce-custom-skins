@@ -14,6 +14,9 @@ import * as FocusController from './FocusController';
 const getContentEditableHost = (editor: Editor, node: Node): HTMLElement | null =>
   editor.dom.getParent(node, (node): node is HTMLElement => editor.dom.getContentEditable(node) === 'true');
 
+const hasContentEditableFalseParent = (editor: Editor, node: Node): boolean =>
+  editor.dom.getParent(node, (node): node is HTMLElement => editor.dom.getContentEditable(node) === 'false') !== null;
+
 const getCollapsedNode = (rng: Range): Optional<SugarElement<Node>> =>
   rng.collapsed ? Optional.from(RangeNodes.getNode(rng.startContainer, rng.startOffset)).map(SugarElement.fromDom) : Optional.none();
 
@@ -79,20 +82,30 @@ const focusEditor = (editor: Editor) => {
   const selection: EditorSelection = editor.selection;
   const body = editor.getBody();
   let rng = selection.getRng();
-
   editor.quirks.refreshContentEditable();
 
-  if (Type.isNonNullable(editor.bookmark) && !hasFocus(editor)) {
+  const restoreBookmark = (editor: Editor) => {
     SelectionBookmark.getRng(editor).each((bookmarkRng) => {
       editor.selection.setRng(bookmarkRng);
       rng = bookmarkRng;
     });
+  };
+
+  if (!hasFocus(editor) && editor.hasEditableRoot()) {
+    restoreBookmark(editor);
   }
 
   // Move focus to contentEditable=true child if needed
   const contentEditableHost = getContentEditableHost(editor, selection.getNode());
   if (contentEditableHost && editor.dom.isChildOf(contentEditableHost, body)) {
+    if (!hasContentEditableFalseParent(editor, contentEditableHost)) {
+      focusBody(body);
+    }
+
     focusBody(contentEditableHost);
+    if (!editor.hasEditableRoot()) {
+      restoreBookmark(editor);
+    }
     normalizeSelection(editor, rng);
     activateEditor(editor);
     return;

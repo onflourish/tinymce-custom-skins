@@ -9,7 +9,7 @@ import { EventArgs, SugarElement } from '@ephox/sugar';
 import { toolbarButtonEventOrder } from 'tinymce/themes/silver/ui/toolbar/button/ButtonEvents';
 
 import { UiFactoryBackstageShared } from '../../backstage/Backstage';
-import * as ReadOnly from '../../ReadOnly';
+import * as UiState from '../../UiState';
 import { DisablingConfigs } from '../alien/DisablingConfigs';
 import * as UiUtils from '../alien/UiUtils';
 import { renderLabel, renderReplaceableIconFromPack } from '../button/ButtonSlices';
@@ -38,6 +38,7 @@ export interface CommonDropdownSpec<T> {
   readonly disabled?: boolean;
   readonly tooltip: Optional<string>;
   readonly role: Optional<string>;
+  readonly listRole?: string;
   readonly fetch: (comp: AlloyComponent, callback: (tdata: Optional<TieredData>) => void) => void;
   readonly onSetup: (itemApi: T) => OnDestroy<T>;
   readonly getApi: (comp: AlloyComponent) => T;
@@ -47,6 +48,7 @@ export interface CommonDropdownSpec<T> {
   readonly dropdownBehaviours: Behaviour.NamedConfiguredBehaviour<any, any, any>[];
   readonly searchable?: boolean;
   readonly ariaLabel: Optional<string>;
+  readonly context: string;
 }
 
 // TODO: Use renderCommonStructure here.
@@ -105,6 +107,7 @@ const renderCommonDropdown = <T>(
   };
 
   const role = spec.role.fold(() => ({}), (role) => ({ role }));
+  const listRole = Optional.from(spec.listRole).map((listRole) => ({ listRole })).getOr({});
 
   const ariaLabelAttribute = spec.ariaLabel.fold(
     () => ({}),
@@ -129,6 +132,7 @@ const renderCommonDropdown = <T>(
     AlloyDropdown.sketch({
       ...spec.uid ? { uid: spec.uid } : {},
       ...role,
+      ...listRole,
       dom: {
         tag: 'button',
         classes: [ prefix, `${prefix}--select` ].concat(Arr.map(spec.classes, (c) => `${prefix}--${c}`)),
@@ -155,8 +159,8 @@ const renderCommonDropdown = <T>(
 
       dropdownBehaviours: Behaviour.derive([
         ...spec.dropdownBehaviours,
-        DisablingConfigs.button(() => spec.disabled || sharedBackstage.providers.isDisabled()),
-        ReadOnly.receivingConfig(),
+        DisablingConfigs.button(() => spec.disabled || sharedBackstage.providers.checkUiComponentContext(spec.context).shouldDisable),
+        UiState.toggleOnReceive(() => sharedBackstage.providers.checkUiComponentContext(spec.context)),
         // INVESTIGATE (TINY-9012): There was a old comment here about something not quite working, and that
         // we can still get the button focused. It was probably related to Unselecting.
         Unselecting.config({}),
@@ -175,7 +179,14 @@ const renderCommonDropdown = <T>(
           onControlDetached(spec, editorOffCell)
         ]),
         AddEventsBehaviour.config(fixWidthBehaviourName, [
-          AlloyEvents.runOnAttached((comp, _se) => UiUtils.forceInitialSize(comp)),
+          AlloyEvents.runOnAttached((comp, _se) => {
+            if (spec.listRole !== 'listbox') {
+              UiUtils.forceInitialSize(comp);
+            }
+          }),
+        ]),
+        AddEventsBehaviour.config('close-on--window-resize', [
+          AlloyEvents.run(SystemEvents.windowResize(), (comp, _se) => AlloyDropdown.close(comp)),
         ]),
         AddEventsBehaviour.config('menubutton-update-display-text', [
           // These handlers are just using Replacing to replace either the menu
@@ -242,16 +253,19 @@ const renderCommonDropdown = <T>(
           // When the menu is "searchable", use fakeFocus so that keyboard
           // focus stays in the search field
           fakeFocus: spec.searchable,
-          onHighlightItem: updateAriaOnHighlight,
-          onCollapseMenu: (tmenuComp, itemCompCausingCollapse, nowActiveMenuComp) => {
-            // We want to update ARIA on collapsing as well, because it isn't changing
-            // the highlights. So what we need to do is get the right parameters to
-            // pass to updateAriaOnHighlight
-            Highlighting.getHighlighted(nowActiveMenuComp).each((itemComp) => {
-              updateAriaOnHighlight(tmenuComp, nowActiveMenuComp, itemComp);
-            });
-          },
-          onDehighlightItem: updateAriaOnDehighlight
+          // We don't want to update the  `aria-selected` on highlight or dehighlight for the `listbox` role because that is used to indicate the selected item
+          ...(spec.listRole === 'listbox' ? {} : {
+            onHighlightItem: updateAriaOnHighlight,
+            onCollapseMenu: (tmenuComp, itemCompCausingCollapse, nowActiveMenuComp) => {
+              // We want to update ARIA on collapsing as well, because it isn't changing
+              // the highlights. So what we need to do is get the right parameters to
+              // pass to updateAriaOnHighlight
+              Highlighting.getHighlighted(nowActiveMenuComp).each((itemComp) => {
+                updateAriaOnHighlight(tmenuComp, nowActiveMenuComp, itemComp);
+              });
+            },
+            onDehighlightItem: updateAriaOnDehighlight
+          })
         }
       },
 
